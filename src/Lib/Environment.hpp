@@ -18,10 +18,13 @@
 #define __Environment__
 
 #include <iostream>
+#include <rclcpp/logger.hpp>
 
 #include "Forwards.hpp"
 #include "Exception.hpp"
 #include "DHMap.hpp"
+#include "fdstream.hpp"
+
 
 namespace Lib {
 
@@ -57,6 +60,8 @@ public:
   /** Currently used timer, this is used by all timers as a global clock */
   Timer* timer;
 
+  ostringstream* rosCout;
+  rclcpp::Logger _logger;
   unsigned char maxSineLevel;
 
   DHMap<unsigned, unsigned>* predicateSineLevels;

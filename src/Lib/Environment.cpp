@@ -27,6 +27,7 @@
 #include "Shell/Statistics.hpp"
 
 #include "Timer.hpp"
+#include <rclcpp/logging.hpp>
 
 #include "Environment.hpp"
 
@@ -50,12 +51,14 @@ Environment::Environment()
     colorUsed(false),
     _outputDepth(0),
     _priorityOutput(0),
-    _pipe(0)
+    _pipe(0),
+    _logger(rclcpp::get_logger("Vampire"))
 {
   START_CHECKING_FOR_ALLOCATOR_BYPASSES;
 
 
   options = new Options;
+  rosCout = new ostringstream();
 
   // statistics calls the timer
   timer = Timer::instance();
@@ -189,6 +192,8 @@ bool Environment::haveOutput()
  * Process must have an output stream acquired in order to call
  * this function.
  */
+
+
 ostream& Environment::out()
 {
   CALL("Environment::out");
@@ -201,7 +206,7 @@ ostream& Environment::out()
     return _pipe->out();
   }
   else {
-    return cout;
+    return *rosCout;
   }
 }
 

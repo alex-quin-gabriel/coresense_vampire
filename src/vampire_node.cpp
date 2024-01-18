@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "coresense_vampire/action/vampire.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 
@@ -76,7 +77,7 @@
 
 #define USE_SPIDER 0
 #define SAVE_SPIDER_PROPERTIES 0
-
+#include <unistd.h>  
 
 using namespace Shell;
 using namespace SAT;
@@ -476,7 +477,11 @@ void vampireMode()
 
   env.beginOutput();
   UIHelper::outputResult(env.out());
+  std::string s;
+  s =env.rosCout->str();
+  RCLCPP_INFO_STREAM(env._logger, "" << s);
   env.endOutput();
+
 
   if (env.statistics->terminationReason == Statistics::REFUTATION
       || env.statistics->terminationReason == Statistics::SATISFIABLE) {
@@ -651,17 +656,157 @@ void axiomSelectionMode()
 }
 /* This example creates a subclass of Node and uses std::bind() to register a
 * member function as a callback from the timer. */
-class MinimalSubscriber : public rclcpp::Node
+class VampireNode : public rclcpp::Node
 {
   public:
-    MinimalSubscriber()
-    : Node("minimal_subscriber")
+    using Vampire = coresense_vampire::action::Vampire;
+    VampireNode()
+    : Node("vampire_node")
     {
-      subscription_ = this->create_subscription<std_msgs::msg::String>(
-      "topic", 10, std::bind(&MinimalSubscriber::topic_callback, this, _1));
+      subscription_ = this->create_subscription<std_msgs::msg::String>( "vampire", 10, std::bind(&VampireNode::default_mode_callback, this, _1));
+        this->action_server_ = rclcpp_action::create_server<Vampire>(
+        this,
+        "vampire",
+        std::bind(&VampireNode::handle_goal, this, _1, _2),
+        std::bind(&VampireNode::handle_cancel, this, _1),
+        std::bind(&VampireNode::handle_accepted, this, _1));
+      }
     }
 
   private:
+
+
+    rclcpp_action::GoalResponse handle_goal(
+      const rclcpp_action::GoalUUID & uuid,
+      std::shared_ptr<const Action::Goal> goal)
+    {
+      RCLCPP_INFO(this->get_logger(), "Received goal request with order %d", goal->order);
+      (void)uuid;
+      return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
+    }
+    void check_conjecture_callback(const std_msgs::msg::String & msg) const
+    {
+      // takes a set of axioms (formulas) or clauses and a conjecture (formula or set of clauses)
+      // outputs proof
+      // method: negation of conjecture and checking for unsatisfiability
+      // internally converts to CNF (Clause Normal Form (Conjunction of Disjunctions)) and runs saturation algorithm
+      // i.e. computes a closure and applies resolution+superposition
+    }
+
+    void default_mode_callback(const std_msgs::msg::String & msg) const
+    {
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      env.options->setInputFile(msg.data.c_str());
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+      vampireMode();
+    }
+
+    void portfolio_mode_callback(const std_msgs::msg::String & msg) const
+    {
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+      env.options->setIgnoreMissing(Options::IgnoreMissing::WARN);
+
+      if (CASC::PortfolioMode::perform(env.options->slowness())) {
+        vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
+      }
+    }
+
+    void casc_mode_callback(const std_msgs::msg::String & msg) const
+    {
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+      env.options->setIgnoreMissing(Options::IgnoreMissing::WARN);
+      env.options->setSchedule(Options::Schedule::CASC);
+      env.options->setOutputMode(Options::Output::SZS);
+      env.options->setProof(Options::Proof::TPTP);
+      env.options->setOutputAxiomNames(true);
+      env.options->setNormalize(true);
+      env.options->setRandomizeSeedForPortfolioWorkers(false);
+      //env.options->setTimeLimitInSeconds(300);
+
+      if (CASC::PortfolioMode::perform(env.options->slowness())) {
+        vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
+      }
+    }
+
+    void casc_hol_mode_callback(const std_msgs::msg::String & msg) const
+    {
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+      env.options->setIgnoreMissing(Options::IgnoreMissing::WARN);
+      env.options->setSchedule(Options::Schedule::SNAKE_TPTP_HOL);
+      env.options->setOutputMode(Options::Output::SZS);
+      env.options->setProof(Options::Proof::TPTP);
+      env.options->setMulticore(0); // use all available cores
+      env.options->setOutputAxiomNames(true);
+      // normalise?
+      // switch of seed randomisation?
+
+      if (CASC::PortfolioMode::perform(env.options->slowness())) {
+        vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
+      }
+    }
+
+    void casc_sat_mode_callback(const std_msgs::msg::String & msg) const
+    {
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+      env.options->setIgnoreMissing(Options::IgnoreMissing::WARN);
+      env.options->setSchedule(Options::Schedule::CASC_SAT);
+      env.options->setOutputMode(Options::Output::SZS);
+      env.options->setProof(Options::Proof::TPTP);
+      env.options->setOutputAxiomNames(true);
+      env.options->setNormalize(true);
+      env.options->setRandomizeSeedForPortfolioWorkers(false);
+      //env.options->setTimeLimitInSeconds(300);
+
+      if (CASC::PortfolioMode::perform(env.options->slowness())) {
+        vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
+      }
+    }
+
+
+    void casc_ltb_mode_callback(const std_msgs::msg::String & msg) const
+    {
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+        bool learning = env.options->ltbLearning()!=Options::LTBLearning::OFF;
+        try {
+          if(learning){
+            CASC::CLTBModeLearning::perform();
+          }
+          else{
+            CASC::CLTBMode::perform();
+          }
+        } catch (Lib::SystemFailException& ex) {
+          cerr << "Process " << getpid() << " received SystemFailException" << endl;
+          ex.cry(cerr);
+          cerr << " and will now die" << endl;
+        }
+        //we have processed the ltb batch file, so we can return zero
+        vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
+    }
+
+
     void topic_callback(const std_msgs::msg::String & msg) const
     {
       RCLCPP_INFO(this->get_logger(), "I heard: '%s'", msg.data.c_str());
@@ -828,7 +973,8 @@ class MinimalSubscriber : public rclcpp::Node
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalSubscriber>());
+  RCLCPP_INFO(rclcpp::get_logger("Vampire"), "pid: %i", getpid());
+  rclcpp::spin(std::make_shared<VampireNode>());
   rclcpp::shutdown();
   return 0;
 }

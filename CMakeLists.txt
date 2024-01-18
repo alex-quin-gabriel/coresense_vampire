@@ -6,6 +6,8 @@ add_definitions(-w)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+add_compile_options(-g)
+
 SET(COMPILE_TESTS OFF)
 
 # find dependencies
@@ -770,4 +772,9 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+find_package(rosidl_default_generators REQUIRED)
+
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/Vampire.action"
+)
 ament_package()

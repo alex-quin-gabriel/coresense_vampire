@@ -39,15 +39,15 @@ SyncPipe::SyncPipe()
 {
   ensureEventHandlersInstalled();
 
-  int fd[2];
+  int fd[2]; //stderr
   errno=0;
   int res=pipe(fd);
   if(res==-1) {
     SYSTEM_FAIL("Pipe creation.", errno);
   }
 
-  _readDescriptor=fd[0];
-  _writeDescriptor=fd[1];
+  _readDescriptor=fd[0]; //stdin
+  _writeDescriptor=fd[1]; //stdout
 
   {
     BYPASSING_ALLOCATOR;

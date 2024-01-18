@@ -380,7 +380,7 @@ void Options::init()
     _lookup.insert(&_thanks);
     _thanks.setExperimental();
 
-    _timeLimitInDeciseconds = TimeLimitOptionValue("time_limit","t",600); // stores deciseconds, but reads seconds from the user by default
+    _timeLimitInDeciseconds = TimeLimitOptionValue("time_limit","t",6000); // stores deciseconds, but reads seconds from the user by default
     _timeLimitInDeciseconds.description="Time limit in wall clock seconds, you can use d,s,m,h,D suffixes also i.e. 60s, 5m. Setting it to 0 effectively gives no time limit.";
     _lookup.insert(&_timeLimitInDeciseconds);
 

@@ -23,9 +23,7 @@
 #include <streambuf>
 
 #include "Forwards.hpp"
-
 #include "Exception.hpp"
-
 namespace Lib {
 
 template <
