@@ -4,8 +4,9 @@
 #include <memory>
 #include <string>
 
-#include "coresense_vampire/action/vampire.hpp"
+#include "coresense_vampire_msgs/action/vampire.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include <iostream>
@@ -659,10 +660,12 @@ void axiomSelectionMode()
 class VampireNode : public rclcpp::Node
 {
   public:
-    using Vampire = coresense_vampire::action::Vampire;
+    using Vampire = coresense_vampire_msgs::action::Vampire;
+    using GoalHandleVampire = rclcpp_action::ServerGoalHandle<Vampire>;
     VampireNode()
     : Node("vampire_node")
     {
+      using namespace std::placeholders;
       subscription_ = this->create_subscription<std_msgs::msg::String>( "vampire", 10, std::bind(&VampireNode::default_mode_callback, this, _1));
         this->action_server_ = rclcpp_action::create_server<Vampire>(
         this,
@@ -670,20 +673,41 @@ class VampireNode : public rclcpp::Node
         std::bind(&VampireNode::handle_goal, this, _1, _2),
         std::bind(&VampireNode::handle_cancel, this, _1),
         std::bind(&VampireNode::handle_accepted, this, _1));
-      }
     }
 
   private:
 
+    rclcpp_action::Server<Vampire>::SharedPtr action_server_;
 
     rclcpp_action::GoalResponse handle_goal(
       const rclcpp_action::GoalUUID & uuid,
-      std::shared_ptr<const Action::Goal> goal)
+      std::shared_ptr<const Vampire::Goal> goal)
     {
-      RCLCPP_INFO(this->get_logger(), "Received goal request with order %d", goal->order);
+      RCLCPP_INFO(this->get_logger(), "Received problem: %s", goal->problem);
       (void)uuid;
       return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
+
+    rclcpp_action::CancelResponse handle_cancel(
+    const std::shared_ptr<GoalHandleVampire> goal_handle)
+    {
+      RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
+      (void)goal_handle;
+      return rclcpp_action::CancelResponse::ACCEPT;
+    }
+    
+    void handle_accepted(const std::shared_ptr<GoalHandleVampire> goal_handle)
+    {
+      using namespace std::placeholders;
+      // this needs to return quickly to avoid blocking the executor, so spin up a new thread
+      std::thread{std::bind(&VampireNode::execute, this, _1), goal_handle}.detach();
+    }
+
+    void execute(const std::shared_ptr<GoalHandleVampire> goal_handle)
+    {
+      RCLCPP_INFO(this->get_logger(), "Executing goal");
+    }
+
     void check_conjecture_callback(const std_msgs::msg::String & msg) const
     {
       // takes a set of axioms (formulas) or clauses and a conjecture (formula or set of clauses)

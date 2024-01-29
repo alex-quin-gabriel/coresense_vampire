@@ -16,7 +16,11 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
+find_package(rclcpp_components REQUIRED)
+#find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(coresense_vampire_msgs REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/Lib
@@ -720,7 +724,10 @@ add_compile_definitions(VTIME_PROFILING=1)
 add_compile_definitions(VHOL=1)
 add_compile_definitions(VDEBUG=0)
 configure_file(src/version.cpp.in version.cpp)
-add_executable(vampire
+
+#rosidl_generate_interfaces(${PROJECT_NAME} "action/Vampire.action")
+
+add_library(vampire_action SHARED
   src/vampire_node.cpp
   ${VAMPIRE_DEBUG_SOURCES}
     ${VAMPIRE_LIB_SOURCES}
@@ -740,25 +747,71 @@ add_executable(vampire
     ${VAMPIRE_CASC_SOURCES}
     src/Forwards.hpp
     "${CMAKE_CURRENT_BINARY_DIR}/version.cpp")
-    #     ${SOURCES_KERNEL}
-    #${SOURCES_LIB}
-    #${SOURCES_FMB}
-    #${SOURCES_SAT}
-    #${SOURCES_SATURATION}
-    #${SOURCES_PARSE}
-    #${SOURCES_INFERENCES}
-    #${SOURCES_LIB_SYS}
-    #   ${SOURCES_INDEXING}
-    #${SOURCES_SHELL})
- #target_link_directories(vampire
- # PUBLIC
- # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Lib>
- #   $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(vampire rclcpp std_msgs)
-set(CMAKE_BUILD_TYPE )
+
+target_include_directories(vampire_action PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+target_compile_definitions(vampire_action
+  PRIVATE "VAMPIRE_NODE_CPP_BUILDING_DLL")
+
+ament_target_dependencies(vampire_action
+  "std_msgs"
+  "coresense_vampire_msgs"
+  "rclcpp"
+  "rclcpp_action"
+  "rclcpp_components")
+
+rclcpp_components_register_node(vampire_action PLUGIN "vampire_node_cpp::VampireNode" EXECUTABLE vampire_action_server)
+
+
 install(TARGETS
-  vampire
-  DESTINATION lib/${PROJECT_NAME})
+  vampire_action
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+# add_executable(vampire
+#   src/vampire_node.cpp
+#   ${VAMPIRE_DEBUG_SOURCES}
+#     ${VAMPIRE_LIB_SOURCES}
+#     ${VAMPIRE_LIB_SYS_SOURCES}
+#     ${VAMPIRE_KERNEL_SOURCES}
+#     ${VAMPIRE_INDEXING_SOURCES}
+#     ${VAMPIRE_INFERENCE_SOURCES}
+#     ${VAMPIRE_INSTANCEGENERATION_SOURCES}
+#     ${VAMPIRE_SAT_SOURCES}
+#     ${VAMPIRE_DECISION_PROCEDURES_SOURCES}
+#     ${VAMPIRE_SATURATION_SOURCES}
+#     ${VAMPIRE_SHELL_SOURCES}
+#     ${VAMPIRE_PARSE_SOURCES}
+#     ${VAMPIRE_FINITEMODELBUILDING_SOURCES}
+#     ${VAMPIRE_SMTCOMP_SOURCES}
+#     ${VAMPIRE_MINISAT_SOURCES}
+#     ${VAMPIRE_CASC_SOURCES}
+#     src/Forwards.hpp
+#     "${CMAKE_CURRENT_BINARY_DIR}/version.cpp")
+#     #     ${SOURCES_KERNEL}
+#     #${SOURCES_LIB}
+#     #${SOURCES_FMB}
+#     #${SOURCES_SAT}
+#     #${SOURCES_SATURATION}
+#     #${SOURCES_PARSE}
+#     #${SOURCES_INFERENCES}
+#     #${SOURCES_LIB_SYS}
+#     #   ${SOURCES_INDEXING}
+#     #${SOURCES_SHELL})
+#  #target_link_directories(vampire
+#  # PUBLIC
+#  # $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/Lib>
+#  #   $<INSTALL_INTERFACE:include>)
+# ament_target_dependencies(vampire rclcpp std_msgs)
+set(CMAKE_BUILD_TYPE )
+# install(TARGETS
+#   vampire
+#   vampire_action
+#   ARCHIVE DESTINATION lib
+#   LIBRARY DESTINATION lib
+#   RUNTIME DESTINATION bin)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -772,9 +825,5 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "action/Vampire.action"
-)
 ament_package()

@@ -1,1 +1,5 @@
 .session
+.cache
+build
+install
+log
