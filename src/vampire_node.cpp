@@ -655,6 +655,8 @@ void axiomSelectionMode()
   //we have successfully output the selected units, so we'll terminate with zero return value
   vampireReturnValue = VAMP_RESULT_STATUS_SUCCESS;
 }
+
+namespace vampire_node_cpp {
 /* This example creates a subclass of Node and uses std::bind() to register a
 * member function as a callback from the timer. */
 class VampireNode : public rclcpp::Node
@@ -667,7 +669,7 @@ class VampireNode : public rclcpp::Node
     {
       using namespace std::placeholders;
       subscription_ = this->create_subscription<std_msgs::msg::String>( "vampire", 10, std::bind(&VampireNode::default_mode_callback, this, _1));
-        this->action_server_ = rclcpp_action::create_server<Vampire>(
+      this->action_server_ = rclcpp_action::create_server<Vampire>(
         this,
         "vampire",
         std::bind(&VampireNode::handle_goal, this, _1, _2),
@@ -683,7 +685,7 @@ class VampireNode : public rclcpp::Node
       const rclcpp_action::GoalUUID & uuid,
       std::shared_ptr<const Vampire::Goal> goal)
     {
-      RCLCPP_INFO(this->get_logger(), "Received problem: %s", goal->problem);
+      RCLCPP_INFO(this->get_logger(), "Received problem: %s", goal->problem.c_str());
       (void)uuid;
       return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
@@ -706,6 +708,21 @@ class VampireNode : public rclcpp::Node
     void execute(const std::shared_ptr<GoalHandleVampire> goal_handle)
     {
       RCLCPP_INFO(this->get_logger(), "Executing goal");
+ #if VTIME_PROFILING
+      TimeTrace::instance().setEnabled(env.options->timeStatistics());
+ #endif
+      const auto goal = goal_handle->get_goal();
+      env.options->setInputFile(goal->problem.c_str());
+      Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
+      Lib::Random::setSeed(env.options->randomSeed());
+      auto result = std::make_shared<Vampire::Result>();
+      vampireMode();
+      // Check if goal is done
+      if (rclcpp::ok()) {
+        result->result = env.rosCout->str();
+        goal_handle->succeed(result);
+        RCLCPP_INFO(this->get_logger(), "Goal succeeded");
+      }
     }
 
     void check_conjecture_callback(const std_msgs::msg::String & msg) const
@@ -992,13 +1009,14 @@ class VampireNode : public rclcpp::Node
       }
     }
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
-};
+  };
+}
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
   RCLCPP_INFO(rclcpp::get_logger("Vampire"), "pid: %i", getpid());
-  rclcpp::spin(std::make_shared<VampireNode>());
+  rclcpp::spin(std::make_shared<vampire_node_cpp::VampireNode>());
   rclcpp::shutdown();
   return 0;
 }

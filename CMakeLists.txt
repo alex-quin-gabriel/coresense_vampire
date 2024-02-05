@@ -17,9 +17,7 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
-find_package(rclcpp_components REQUIRED)
 #find_package(rosidl_default_generators REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(coresense_vampire_msgs REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/src
@@ -727,7 +725,7 @@ configure_file(src/version.cpp.in version.cpp)
 
 #rosidl_generate_interfaces(${PROJECT_NAME} "action/Vampire.action")
 
-add_library(vampire_action SHARED
+add_executable(vampire
   src/vampire_node.cpp
   ${VAMPIRE_DEBUG_SOURCES}
     ${VAMPIRE_LIB_SOURCES}
@@ -748,27 +746,26 @@ add_library(vampire_action SHARED
     src/Forwards.hpp
     "${CMAKE_CURRENT_BINARY_DIR}/version.cpp")
 
-target_include_directories(vampire_action PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-target_compile_definitions(vampire_action
-  PRIVATE "VAMPIRE_NODE_CPP_BUILDING_DLL")
+# target_include_directories(vampire_action PRIVATE
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#   $<INSTALL_INTERFACE:include>)
+#target_compile_definitions(vampire_action
+#  PRIVATE "VAMPIRE_NODE_CPP_BUILDING_DLL")
 
-ament_target_dependencies(vampire_action
-  "std_msgs"
+ament_target_dependencies(vampire
   "coresense_vampire_msgs"
   "rclcpp"
-  "rclcpp_action"
-  "rclcpp_components")
+  "rclcpp_action")
 
-rclcpp_components_register_node(vampire_action PLUGIN "vampire_node_cpp::VampireNode" EXECUTABLE vampire_action_server)
+#rclcpp_components_register_node(vampire_action PLUGIN "vampire_node_cpp::VampireNode" EXECUTABLE vampire_action_server)
 
 
 install(TARGETS
-  vampire_action
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin)
+  vampire
+  DESTINATION lib/${PROJECT_NAME}/)
+#  ARCHIVE DESTINATION lib
+#  LIBRARY DESTINATION lib
+#  RUNTIME DESTINATION bin)
 
 # add_executable(vampire
 #   src/vampire_node.cpp
