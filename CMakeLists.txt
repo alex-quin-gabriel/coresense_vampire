@@ -17,6 +17,7 @@ find_package(ament_cmake REQUIRED)
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(std_msgs REQUIRED)
 #find_package(rosidl_default_generators REQUIRED)
 find_package(coresense_vampire_msgs REQUIRED)
 
@@ -754,6 +755,7 @@ add_executable(vampire
 
 ament_target_dependencies(vampire
   "coresense_vampire_msgs"
+  "std_msgs"
   "rclcpp"
   "rclcpp_action")
 
