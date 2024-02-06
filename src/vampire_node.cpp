@@ -713,6 +713,8 @@ class VampireNode : public rclcpp::Node
  #endif
       const auto goal = goal_handle->get_goal();
       env.options->setInputFile(goal->problem.c_str());
+      auto feedback = std::make_shared<Vampire::Feedback>();
+      //goal_handle->publish_feedback(feedback);
       Allocator::setMemoryLimit(env.options->memoryLimit() * 1048576ul);
       Lib::Random::setSeed(env.options->randomSeed());
       auto result = std::make_shared<Vampire::Result>();
@@ -720,6 +722,7 @@ class VampireNode : public rclcpp::Node
       // Check if goal is done
       if (rclcpp::ok()) {
         result->result = env.rosCout->str();
+        env.rosCout->str("");
         goal_handle->succeed(result);
         RCLCPP_INFO(this->get_logger(), "Goal succeeded");
       }

@@ -240,7 +240,7 @@ void resetParsing(T exception, vstring inputFile, istream*& input,vstring nowtry
 Problem* UIHelper::getInputProblem(const Options& opts)
 {
   CALL("UIHelper::getInputProblem");
-    
+   
   TIME_TRACE(TimeTrace::PARSING);
   env.statistics->phase = Statistics::PARSING;
 
@@ -255,7 +255,8 @@ Problem* UIHelper::getInputProblem(const Options& opts)
     // CAREFUL: this might not be enough if the ifstream (re)allocates while being operated
     BYPASSING_ALLOCATOR; 
     
-    input=new ifstream(inputFile.c_str());
+    //input=new ifstream(inputFile.c_str());
+    input=new istringstream(inputFile.c_str());
     if (input->fail()) {
       USER_ERROR("Cannot open problem file: "+inputFile);
     }
