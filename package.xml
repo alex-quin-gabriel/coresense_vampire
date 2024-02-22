@@ -14,7 +14,7 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>action_msgs</depend>
-  <depend>coresense_vampire_msgs</depend>
+  <depend>coresense_msgs</depend>
 
 
   <export>

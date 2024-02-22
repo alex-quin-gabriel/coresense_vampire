@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "coresense_vampire_msgs/action/vampire.hpp"
+#include "coresense_msgs/action/vampire.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -662,7 +662,7 @@ namespace vampire_node_cpp {
 class VampireNode : public rclcpp::Node
 {
   public:
-    using Vampire = coresense_vampire_msgs::action::Vampire;
+    using Vampire = coresense_msgs::action::Vampire;
     using GoalHandleVampire = rclcpp_action::ServerGoalHandle<Vampire>;
     VampireNode()
     : Node("vampire_node")

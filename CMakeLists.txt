@@ -19,7 +19,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(std_msgs REQUIRED)
 #find_package(rosidl_default_generators REQUIRED)
-find_package(coresense_vampire_msgs REQUIRED)
+find_package(coresense_msgs REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/src/Lib
@@ -754,7 +754,7 @@ add_executable(vampire
 #  PRIVATE "VAMPIRE_NODE_CPP_BUILDING_DLL")
 
 ament_target_dependencies(vampire
-  "coresense_vampire_msgs"
+  "coresense_msgs"
   "std_msgs"
   "rclcpp"
   "rclcpp_action")
