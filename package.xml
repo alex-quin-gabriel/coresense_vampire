@@ -4,14 +4,16 @@
   <name>coresense_vampire</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="einalex@4d6.de">einalex</maintainer>
-  <license>TODO: License declaration</license>
+  <maintainer email="A.Gabriel@tudelft.nl">Alex Gabriel</maintainer>
+  <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>rclcpp</build_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
-  <depend>rclcpp</depend>
+
+  <exec_depend>rclcpp</exec_depend>
   <depend>std_msgs</depend>
   <depend>action_msgs</depend>
   <depend>coresense_msgs</depend>
