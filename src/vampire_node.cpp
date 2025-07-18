@@ -118,13 +118,6 @@ class VampireNode : public rclcpp::Node
       Vampire::runProver(goal->query.c_str(), goal->configuration.c_str());
       RCLCPP_INFO(this->get_logger(), "Vampire::runProver() returned, starting watcher.");
       std::thread{std::bind(&VampireNode::check_on_goal, this, std::placeholders::_1), goal_handle}.detach();
-      rclcpp::Rate loop_rate(0.1);
-	    loop_rate.sleep();
-      auto status = Vampire::getStatus();
-      RCLCPP_INFO(this->get_logger(), "status %d", status);
-      RCLCPP_INFO(this->get_logger(), "stop returns %b", Vampire::stopProver());
-      status = Vampire::getStatus();
-      RCLCPP_INFO(this->get_logger(), "status %d", status);
     }
 
     void check_on_goal(const std::shared_ptr<GoalHandleQueryReasoner> goal_handle)
