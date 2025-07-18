@@ -38,7 +38,7 @@ add_executable(vampire_node
 
 target_link_libraries(vampire_node
 	${CMAKE_SOURCE_DIR}/lib/libvampire.so
-	${CMAKE_SOURCE_DIR}/lib/libz3.so
+	${CMAKE_SOURCE_DIR}/lib/libz3.so.4.14
 	)
 
 # target_include_directories(vampire_action PRIVATE
