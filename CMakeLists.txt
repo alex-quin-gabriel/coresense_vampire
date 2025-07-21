@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(coresense_vampire)
 
 add_definitions(-w)
+set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -22,13 +23,12 @@ find_package(std_msgs REQUIRED)
 find_package(coresense_msgs REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/src
-	${CMAKE_SOURCE_DIR}/include/vampire
-	)
+	${CMAKE_SOURCE_DIR}/include/vampire)
 
 link_directories(${CMAKE_SOURCE_DIR}/src)
 
-
 AUX_SOURCE_DIRECTORY(${CMAKE_SOURCE_DIR}/src/Lib SOURCES_LIB)
+
 
 #rosidl_generate_interfaces(${PROJECT_NAME} "action/QueryReasoner.action")
 
@@ -36,24 +36,55 @@ add_executable(vampire_node
   src/vampire_node.cpp
 )
 
-target_link_libraries(vampire_node
-	${CMAKE_SOURCE_DIR}/lib/libvampire.so
-	${CMAKE_SOURCE_DIR}/lib/libz3.so.4.14
-	)
+add_custom_target(copy_libz3 
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_SOURCE_DIR}/lib/libz3.so.4.14
+          ${CMAKE_CURRENT_BINARY_DIR}/libz3.so.4.14)
 
-# target_include_directories(vampire_action PRIVATE
-#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#   $<INSTALL_INTERFACE:include>)
-#target_compile_definitions(vampire_action
-#  PRIVATE "VAMPIRE_NODE_CPP_BUILDING_DLL")
+add_library(libz3 SHARED IMPORTED)
+set_property(
+  TARGET libz3
+  PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libz3.so.4.14
+)
+set_property(
+  TARGET libz3
+  PROPERTY IMPORTED_SONAME libz3.so.4.14
+)
+add_dependencies(libz3 copy_libz3)
+
+add_library(libvampire SHARED IMPORTED)
+
+add_custom_target(copy_libvampire
+  COMMAND ${CMAKE_COMMAND} -E copy
+          ${CMAKE_SOURCE_DIR}/lib/libvampire.so
+          ${CMAKE_CURRENT_BINARY_DIR}/libvampire.so)
+set_property(
+  TARGET libvampire
+  PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libvampire.so
+)
+set_property(
+  TARGET libvampire
+  PROPERTY IMPORTED_SONAME libvampire.so
+)
+add_dependencies(libvampire copy_libvampire)
+
+target_link_libraries(libvampire
+  PUBLIC INTERFACE libz3)
+
+#install(IMPORTED_RUNTIME_ARTIFACTS
+#  libz3
+#  libvampire
+#  LIBRARY DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}/)
+
+target_link_libraries(vampire_node
+  libvampire
+	)
 
 ament_target_dependencies(vampire_node
   "coresense_msgs"
   "std_msgs"
   "rclcpp"
   "rclcpp_action")
-
-#rclcpp_components_register_node(vampire_action PLUGIN "vampire_node_cpp::VampireNode" EXECUTABLE vampire_action_server)
 
 
 install(TARGETS
@@ -118,5 +149,6 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+ament_export_libraries()
 
 ament_package()
