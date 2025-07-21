@@ -138,16 +138,26 @@ class VampireNode : public rclcpp::Node
       switch (status) {
         case (Vampire::ProverStatus::SUCCEEDED):
 	        result->result = Vampire::getSolution();
+          result->code = static_cast<char>(Vampire::ProverStatus::SUCCEEDED);
           goal_handle->succeed(result);
           RCLCPP_INFO(this->get_logger(), "Goal succeeded");
 	        return;
         case (Vampire::ProverStatus::FAILED):
+	        result->result = Vampire::getSolution();
+          result->code = static_cast<char>(Vampire::ProverStatus::FAILED);
+          goal_handle->succeed(result);
           RCLCPP_WARN(this->get_logger(), "Vampire failed to find a proof.");
 	        return;
         case (Vampire::ProverStatus::SIGNALLED):
+	        result->result = Vampire::getSolution();
+          result->code = static_cast<char>(Vampire::ProverStatus::SIGNALLED);
+          goal_handle->succeed(result);
           RCLCPP_WARN(this->get_logger(), "Vampire subprocess ended with signal %d.", Vampire::lastSignal());
 	        return;
         case (Vampire::ProverStatus::ERROR):
+	        result->result = "";
+          result->code = static_cast<char>(Vampire::ProverStatus::ERROR);
+          goal_handle->succeed(result);
           RCLCPP_WARN(this->get_logger(), "Vampire prover returned error.");
 	        return;
 	      default:
