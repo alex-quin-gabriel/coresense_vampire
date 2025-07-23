@@ -63,7 +63,7 @@ class VampireNode : public rclcpp::Node
                              std::shared_ptr<coresense_msgs::srv::AddKnowledge::Response> response)
     {
       RCLCPP_INFO(this->get_logger(), "Received theory %s ", request->id.c_str());
-      RCLCPP_INFO(this->get_logger(), "With content %s ", request->tptp.c_str());
+      //RCLCPP_INFO(this->get_logger(), "With content %s ", request->tptp.c_str());
       response->success = Vampire::loadTPTP(request->id.c_str(), request->tptp.c_str());
     }
 
@@ -92,7 +92,8 @@ class VampireNode : public rclcpp::Node
       const rclcpp_action::GoalUUID & uuid,
       std::shared_ptr<const QueryReasoner::Goal> goal)
     {
-      RCLCPP_INFO(this->get_logger(), "Received query: %s", goal->query.c_str());
+      RCLCPP_INFO(this->get_logger(), "Received query");
+      //RCLCPP_INFO(this->get_logger(), "Received query: %s", goal->query.c_str());
       RCLCPP_INFO(this->get_logger(), "Received config: %s", goal->configuration.c_str());
       //RCLCPP_INFO(this->get_logger(), "Prover status is %d", Vampire::getStatus());
 
@@ -137,25 +138,25 @@ class VampireNode : public rclcpp::Node
 
       switch (status) {
         case (Vampire::ProverStatus::SUCCEEDED):
-	        result->result = Vampire::getSolution();
+	        result->std_output = Vampire::getSolution();
           result->code = static_cast<char>(Vampire::ProverStatus::SUCCEEDED);
           goal_handle->succeed(result);
           RCLCPP_INFO(this->get_logger(), "Goal succeeded");
 	        return;
         case (Vampire::ProverStatus::FAILED):
-	        result->result = Vampire::getSolution();
+	        result->std_output = Vampire::getSolution();
           result->code = static_cast<char>(Vampire::ProverStatus::FAILED);
           goal_handle->succeed(result);
           RCLCPP_WARN(this->get_logger(), "Vampire failed to find a proof.");
 	        return;
         case (Vampire::ProverStatus::SIGNALLED):
-	        result->result = Vampire::getSolution();
+	        result->std_output = Vampire::getSolution();
           result->code = static_cast<char>(Vampire::ProverStatus::SIGNALLED);
           goal_handle->succeed(result);
           RCLCPP_WARN(this->get_logger(), "Vampire subprocess ended with signal %d.", Vampire::lastSignal());
 	        return;
         case (Vampire::ProverStatus::ERROR):
-	        result->result = "";
+	        result->std_output = "";
           result->code = static_cast<char>(Vampire::ProverStatus::ERROR);
           goal_handle->succeed(result);
           RCLCPP_WARN(this->get_logger(), "Vampire prover returned error.");
